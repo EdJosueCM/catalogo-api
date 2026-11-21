@@ -40,7 +40,14 @@ Los modelos están en [`src/models`](src/models).
 | `productos` | `nombre`, `descripcion`, `categoria`, `precio`, fechas | todos obligatorios; `precio > 0`; `nombre` único |
 | `favoritos` | `usuario` (ref), `producto` (ref), `agregadoEn` | índice único `{usuario, producto}` |
 
-**Eliminación de productos:** al eliminar un producto se borran también, en cascada, todos los favoritos que lo referencian ([`productos.repository.js`](src/repositories/productos.repository.js)). La respuesta indica cuántos favoritos se eliminaron (`favoritosEliminados`). Así ningún favorito apunta a un producto inexistente.
+**Eliminación de productos:** al eliminar un producto se borran también, en cascada, todos los favoritos que lo referencian ([`productos.repository.js`](src/repositories/productos.repository.js)). La respuesta indica cuántos favoritos se eliminaron (`favoritosEliminados`).
+
+**Consistencia con peticiones simultáneas:** MongoDB local no admite transacciones sin réplica, así que el borrado del producto y el de sus favoritos son dos operaciones separadas. Si alguien agrega el producto a favoritos justo mientras el administrador lo elimina, podía quedar un favorito huérfano. Lo evitamos en dos niveles:
+
+1. Al agregar un favorito, el `populate` posterior al guardado vuelve a consultar el producto; si ya no existe, se deshace el favorito y se responde `404` ([`favoritos.controller.js`](src/controllers/favoritos.controller.js)).
+2. Como red de seguridad, al listar favoritos se eliminan los que apunten a un producto inexistente ([`favoritos.repository.js`](src/repositories/favoritos.repository.js)).
+
+`npm run test:concurrencia` lo comprueba: 20 usuarios agregan el mismo producto mientras el administrador lo elimina, 10 veces, y verifica que no quede ninguna referencia huérfana.
 
 ### Estructura del proyecto
 
@@ -74,6 +81,8 @@ git clone https://github.com/<usuario>/<repositorio>.git
 cd <repositorio>
 npm ci        # instala exactamente lo que indica package-lock.json
 ```
+
+`npm ci` puede avisar de vulnerabilidades: todas provienen de `newman`, que es una dependencia de desarrollo y no forma parte de la API. `npm audit --omit=dev` reporta 0 vulnerabilidades en las dependencias de producción.
 
 ## 6. Configuración de variables de entorno
 
@@ -275,6 +284,7 @@ Antes de empezar:
 npm run test:postman       # ejecuta "Flujo principal" con los datos de .env
 # Detén el servidor (Ctrl+C) y vuelve a iniciarlo con: npm start
 npm run test:persistencia  # comprueba que usuarios, productos y favoritos siguen ahí
+npm run test:concurrencia  # (opcional) consistencia de favoritos con peticiones simultáneas
 ```
 
 - El script pasa `ADMIN_CORREO`, `ADMIN_PASSWORD` y `JWT_SECRET` a Newman en memoria; no los escribe en ningún archivo.
@@ -300,7 +310,10 @@ npm run test:persistencia  # comprueba que usuarios, productos y favoritos sigue
 | 5. Favoritos | Agregar `201`; duplicado `409`; inexistente `404`; id inválido u objeto `{"$ne":null}` `400`; listar; quitar `200`; quitar de nuevo `404` |
 | 6. Aislamiento | B no ve el favorito de A; B intenta quitar el favorito de A `404`; el favorito de A permanece |
 | 7. Eliminación | El admin elimina un producto y se borra en cascada el favorito de B; consultar eliminado `404`; eliminar de nuevo `404` |
-| Persistencia | Tras reiniciar: login de A, catálogo con al menos 5 productos y el favorito de A sigue guardado |
+| 8. Datos para persistencia | El admin crea un producto y lo actualiza; este producto no se elimina |
+| Persistencia | Tras reiniciar: login de A, catálogo con al menos 5 productos, el producto de la carpeta 8 con los datos de su última actualización y el favorito de A |
+
+> En Postman, al ejecutar **Flujo principal** con el *Collection Runner*, activen **Keep variable values** (en *Advanced settings*). Sin esa opción, Postman descarta al terminar los correos y los id generados, y la carpeta de persistencia no los encuentra.
 
 Cada ejecución usa correos nuevos (`usuario.a.<id>@ejemplo.test`), así que la colección se puede repetir sin limpiar la base de datos.
 
