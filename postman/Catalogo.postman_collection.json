@@ -1319,13 +1319,14 @@
                   "script": {
                     "type": "text/javascript",
                     "exec": [
+                      "const cryptoJs = require('crypto-js');",
                       "const secreto = pm.environment.get(\"jwt_secret\");",
-                      "const b64url = (wa) => CryptoJS.enc.Base64.stringify(wa).replace(/=+$/, \"\").replace(/\\+/g, \"-\").replace(/\\//g, \"_\");",
-                      "const enc = (obj) => b64url(CryptoJS.enc.Utf8.parse(JSON.stringify(obj)));",
+                      "const b64url = (wa) => cryptoJs.enc.Base64.stringify(wa).replace(/=+$/, \"\").replace(/\\+/g, \"-\").replace(/\\//g, \"_\");",
+                      "const enc = (obj) => b64url(cryptoJs.enc.Utf8.parse(JSON.stringify(obj)));",
                       "const ahora = Math.floor(Date.now() / 1000);",
                       "const cabecera = enc({ alg: \"HS256\", typ: \"JWT\" });",
                       "const carga = enc({ sub: pm.collectionVariables.get(\"usuarioA_id\"), rol: \"usuario\", iat: ahora - 7200, exp: ahora - 3600 });",
-                      "const firma = b64url(CryptoJS.HmacSHA256(cabecera + \".\" + carga, secreto || \"sin-secreto\"));",
+                      "const firma = b64url(cryptoJs.HmacSHA256(cabecera + \".\" + carga, secreto || \"sin-secreto\"));",
                       "pm.collectionVariables.set(\"token_vencido\", cabecera + \".\" + carga + \".\" + firma);"
                     ]
                   }
@@ -2298,6 +2299,110 @@
               ]
             }
           ]
+        },
+        {
+          "name": "8. Datos para la prueba de persistencia",
+          "item": [
+            {
+              "name": "Crear producto persistente",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Estado HTTP 201\", () => pm.response.to.have.status(201));",
+                      "const json = pm.response.json();",
+                      "pm.test(\"Devuelve el producto creado\", () => pm.expect(json.data.id).to.be.a(\"string\"));",
+                      "// Se guarda en el entorno para consultarlo después de reiniciar el servidor.",
+                      "pm.environment.set(\"producto_persistente_id\", json.data.id);"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{token_admin}}"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/api/productos",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "productos"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"nombre\": \"Producto persistente {{run_id}}\",\n  \"descripcion\": \"Creado por la API antes del reinicio\",\n  \"categoria\": \"Pruebas\",\n  \"precio\": 75.25\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              }
+            },
+            {
+              "name": "Actualizar producto persistente",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Estado HTTP 200\", () => pm.response.to.have.status(200));",
+                      "const json = pm.response.json();",
+                      "pm.test(\"Refleja la actualización\", () => pm.expect(json.data.precio).to.eql(80.5));"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{token_admin}}"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/api/productos/{{producto_persistente_id}}",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "productos",
+                    "{{producto_persistente_id}}"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"nombre\": \"Producto persistente {{run_id}}\",\n  \"descripcion\": \"Actualizado antes del reinicio\",\n  \"categoria\": \"Pruebas\",\n  \"precio\": 80.5\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              }
+            }
+          ]
         }
       ]
     },
@@ -2381,6 +2486,41 @@
               }
             }
           ]
+        },
+        {
+          "name": "Producto creado por la API tras reinicio",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Estado HTTP 200\", () => pm.response.to.have.status(200));",
+                  "const json = pm.response.json();",
+                  "pm.test(\"Conserva los datos de la última actualización\", () => {",
+                  "  pm.expect(json.data.id).to.eql(pm.environment.get(\"producto_persistente_id\"));",
+                  "  pm.expect(json.data.precio).to.eql(80.5);",
+                  "  pm.expect(json.data.descripcion).to.eql(\"Actualizado antes del reinicio\");",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/productos/{{producto_persistente_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "productos",
+                "{{producto_persistente_id}}"
+              ]
+            }
+          }
         },
         {
           "name": "Favoritos de A tras reinicio",
