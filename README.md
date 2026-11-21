@@ -6,8 +6,8 @@ API REST con Node.js, Express, MongoDB y autenticación JWT para gestionar un ca
 
 | Integrante | Usuario de GitHub | Aportes principales |
 |---|---|---|
-| _Nombre Apellido 1_ | _@usuario1_ | _p. ej. modelos, CRUD de productos, colección de Postman_ |
-| _Nombre Apellido 2_ | _@usuario2_ | _p. ej. autenticación JWT, roles, favoritos, README_ |
+| Eduardo Cercado | @EdJosueCM | Estructura del proyecto, modelos, operaciones de crear, leer, actualizar y eliminar productos, autenticación con token, roles, scripts de inicialización y colección inicial de Postman |
+| César Miño | @LeoSA1919 | Prueba y corrección de favoritos huérfanos con peticiones simultáneas, prueba de persistencia de un producto creado desde Postman, esquema Bearer y documentación |
 
 ## 2. Propósito del proyecto
 
@@ -77,8 +77,8 @@ postman/         colección y entorno de ejemplo
 ## 5. Instalación de dependencias
 
 ```bash
-git clone https://github.com/<usuario>/<repositorio>.git
-cd <repositorio>
+git clone https://github.com/EdJosueCM/catalogo-api.git
+cd catalogo-api
 npm ci        # instala exactamente lo que indica package-lock.json
 ```
 
@@ -320,4 +320,5 @@ Cada ejecución usa correos nuevos (`usuario.a.<id>@ejemplo.test`), así que la 
 ## Recursos y herramientas de apoyo
 
 - Documentación oficial de [Express 5](https://expressjs.com/), [Mongoose](https://mongoosejs.com/docs/), [jsonwebtoken](https://github.com/auth0/node-jsonwebtoken), [bcryptjs](https://github.com/dcodeIO/bcrypt.js) y [Newman](https://github.com/postmanlabs/newman).
-- _Indiquen aquí cualquier otra herramienta (por ejemplo, asistentes de IA) y qué partes del código apoyó._
+- Eduardo Cercado usó Claude (asistente de inteligencia artificial de Anthropic) como apoyo en su parte del proyecto.
+- Claude Code (asistente de inteligencia artificial de Anthropic) para revisar el proyecto, analizar el caso de favoritos huérfanos y escribir, con revisión de César Miño, las pruebas de concurrencia y persistencia y sus correcciones.
