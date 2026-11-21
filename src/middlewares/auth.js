@@ -7,8 +7,9 @@ const usuariosRepo = require('../repositories/usuarios.repository');
 // Verifica firma y expiración, y carga el usuario desde la base de datos
 // para usar su rol actual (no el que diga el cliente).
 async function verificarToken(req, _res, next) {
-  const [esquema, token] = (req.headers.authorization || '').split(' ');
-  if (esquema !== 'Bearer' || !token) {
+  // El esquema de autenticación no distingue mayúsculas (RFC 7235): "Bearer" o "bearer".
+  const [esquema, token] = (req.headers.authorization || '').trim().split(/\s+/);
+  if (esquema.toLowerCase() !== 'bearer' || !token) {
     throw ApiError.noAutenticado('Falta el token de acceso');
   }
 
