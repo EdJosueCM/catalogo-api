@@ -320,5 +320,5 @@ Cada ejecución usa correos nuevos (`usuario.a.<id>@ejemplo.test`), así que la 
 ## Recursos y herramientas de apoyo
 
 - Documentación oficial de [Express 5](https://expressjs.com/), [Mongoose](https://mongoosejs.com/docs/), [jsonwebtoken](https://github.com/auth0/node-jsonwebtoken), [bcryptjs](https://github.com/dcodeIO/bcrypt.js) y [Newman](https://github.com/postmanlabs/newman).
-- Eduardo Cercado usó Claude (asistente de inteligencia artificial de Anthropic) como apoyo en su parte del proyecto.
-- Claude Code (asistente de inteligencia artificial de Anthropic) para revisar el proyecto, analizar el caso de favoritos huérfanos y escribir, con revisión de César Miño, las pruebas de concurrencia y persistencia y sus correcciones.
+- Eduardo Cercado: Claude (asistente de inteligencia artificial de Anthropic) como herramienta de apoyo durante el desarrollo de su parte del proyecto.
+- César Miño: Claude (asistente de inteligencia artificial de Anthropic) como apoyo para revisar el proyecto, encontrar errores (la condición de carrera en favoritos, la prueba de persistencia incompleta y el esquema Bearer) y redactar las pruebas y las correcciones. César decidió cada cambio, lo revisó, lo probó y puede explicarlo.
