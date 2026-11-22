@@ -15,13 +15,22 @@ async function agregar(req, res) {
   const producto = await productosRepo.buscarPorId(productoId);
   if (!producto) throw ApiError.noEncontrado('Producto no encontrado');
 
+  let favorito;
   try {
-    const favorito = await favoritosRepo.agregar(req.usuario.id, productoId);
-    enviar(res, 201, favorito, 'Producto agregado a favoritos');
+    favorito = await favoritosRepo.agregar(req.usuario.id, productoId);
   } catch (err) {
     if (err.code === 11000) throw ApiError.conflicto('El producto ya está en tus favoritos');
     throw err;
   }
+
+  // Carrera con DELETE /productos/:id: si el producto se eliminó entre la comprobación
+  // inicial y el guardado, populate devuelve null. Se deshace el favorito para no dejar
+  // una referencia huérfana.
+  if (!favorito.producto) {
+    await favoritosRepo.quitar(req.usuario.id, productoId);
+    throw ApiError.noEncontrado('Producto no encontrado');
+  }
+  enviar(res, 201, favorito, 'Producto agregado a favoritos');
 }
 
 async function quitar(req, res) {

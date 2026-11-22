@@ -10,7 +10,8 @@
     "seed": "node scripts/seed.js",
     "crear-admin": "node scripts/crear-admin.js",
     "test:postman": "node scripts/pruebas-postman.js",
-    "test:persistencia": "node scripts/pruebas-postman.js persistencia"
+    "test:persistencia": "node scripts/pruebas-postman.js persistencia",
+    "test:concurrencia": "node scripts/prueba-concurrencia.js"
   },
   "engines": {
     "node": ">=20"
